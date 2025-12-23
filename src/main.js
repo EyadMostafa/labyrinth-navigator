@@ -6,7 +6,6 @@ import * as CONSTANTS from './utils/constants.js';
 import { setupPlayer, updatePlayer, getPlayerObject } from './components/player.js'; 
 import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal } from './components/maze.js';
 import { setupLighting } from './graphics/lighting.js';
-import { initUI, updateUI } from './components/ui.js'; // *** NEW IMPORT ***
 import { initUI, updateUI, showGameOverScreen } from './components/ui.js';
 
 // 2. Global State Variables
@@ -85,48 +84,29 @@ function animate() {
     const elapsedTime = clock.getElapsedTime(); 
 
     // 4.1. Core Logic Updates
-    
     updateAnimations(deltaTime, elapsedTime);
-    
     updatePlayer(deltaTime, gameData, wallColliders); 
 
     // Check Objective Collisions (Requirement G)
     checkObjectiveCollisions(playerObject, getKeyCrystal(), getExitPortal()); 
 
-    // 4. Update Game Timer (Requirement G)
+    // 4.2. Update Game Timer (Requirement G)
     gameData.timer = Math.max(0, gameData.timer - deltaTime);
     if (gameData.timer <= 0 && !gameData.winState) {
         gameData.isRunning = false;
-        console.log("Time is up! Game Over.");
+        console.log("⏰ Time is up! Game Over.");
+        showGameOverScreen(false); // Show loss screen
     }
 
-    // 5. Update UI (Required every frame)
+    // 4.3. Update UI (Required every frame)
     updateUI(gameData);
     
-    // 6. Render the Scene
+    // 4.4. Render the Scene
     renderer.render(scene, camera);
 }
 
-if (distSq < collectionDistSq) {
-    gameData.winState = true;
-    gameData.isRunning = false;
-    
-    const exitMaterial = exit.material;
-    exitMaterial.color.setHex(CONSTANTS.COLOR.WIN_GLOW);
-    exitMaterial.emissive.setHex(CONSTANTS.COLOR.WIN_GLOW);
-    
-    console.log("🎉 You Escaped! Game Won!");
-    showGameOverScreen(true); // ← ADD THIS LINE
-}
 
-if (gameData.timer <= 0 && !gameData.winState) {
-    gameData.isRunning = false;
-    console.log("⏰ Time is up! Game Over.");
-    showGameOverScreen(false); // ← ADD THIS LINE
-}
-
-
-// --- 5. Game Logic: Objective Collision Checks (Requirement G) ---
+// 5. Game Logic: Objective Collision Checks (Requirement G)
 
 /**
  * Handles collision/proximity checks for the Key and Exit Portal.
@@ -141,20 +121,18 @@ function checkObjectiveCollisions(player, key, exit) {
     // --- Key Collection Logic ---
     if (!gameData.keyCollected && key) {
         // Calculate the squared distance between player and key
-        // FIXED: Using distanceToSquared
         const distSq = player.position.distanceToSquared(key.position); 
 
         if (distSq < collectionDistSq) {
             // Key Collected! (Requirement G)
             gameData.keyCollected = true;
             removeKeyCrystal();
-            console.log("Key collected! Find the exit!");
+            console.log("🔑 Key collected! Find the exit!");
         }
     }
 
     // --- Exit Activation Logic ---
     if (gameData.keyCollected && !gameData.winState && exit) {
-        // FIXED: Using distanceToSquared
         const distSq = player.position.distanceToSquared(exit.position);
         
         if (distSq < collectionDistSq) {
@@ -167,7 +145,8 @@ function checkObjectiveCollisions(player, key, exit) {
             exitMaterial.color.setHex(CONSTANTS.COLOR.WIN_GLOW);
             exitMaterial.emissive.setHex(CONSTANTS.COLOR.WIN_GLOW);
             
-            console.log("You Escaped! Game Won!");
+            console.log("🎉 You Escaped! Game Won!");
+            showGameOverScreen(true); // Show win screen
         }
     }
 }
