@@ -7,6 +7,7 @@ import { setupPlayer, updatePlayer, getPlayerObject } from './components/player.
 import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal } from './components/maze.js';
 import { setupLighting } from './graphics/lighting.js';
 import { initUI, updateUI } from './components/ui.js'; // *** NEW IMPORT ***
+import { initUI, updateUI, showGameOverScreen } from './components/ui.js';
 
 // 2. Global State Variables
 let scene;
@@ -104,6 +105,24 @@ function animate() {
     
     // 6. Render the Scene
     renderer.render(scene, camera);
+}
+
+if (distSq < collectionDistSq) {
+    gameData.winState = true;
+    gameData.isRunning = false;
+    
+    const exitMaterial = exit.material;
+    exitMaterial.color.setHex(CONSTANTS.COLOR.WIN_GLOW);
+    exitMaterial.emissive.setHex(CONSTANTS.COLOR.WIN_GLOW);
+    
+    console.log("🎉 You Escaped! Game Won!");
+    showGameOverScreen(true); // ← ADD THIS LINE
+}
+
+if (gameData.timer <= 0 && !gameData.winState) {
+    gameData.isRunning = false;
+    console.log("⏰ Time is up! Game Over.");
+    showGameOverScreen(false); // ← ADD THIS LINE
 }
 
 

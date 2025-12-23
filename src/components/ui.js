@@ -60,3 +60,31 @@ export function updateUI(gameData) {
         }
     }
 }
+
+/**
+ * Shows the game over screen with win/loss message
+ * @param {boolean} didWin - True if player won, false if lost
+ */
+export function showGameOverScreen(didWin) {
+    const screen = document.getElementById('game-over-screen');
+    const title = document.getElementById('result-title');
+    const message = document.getElementById('result-message');
+    
+    if (didWin) {
+        title.textContent = "YOU ESCAPED!";
+        title.style.color = "#00ffff"; // Cyan for win
+        message.textContent = "Congratulations! You conquered the labyrinth!";
+    } else {
+        title.textContent = "TIME'S UP!";
+        title.style.color = "#ff4444"; // Red for loss
+        message.textContent = "You failed to escape in time. Try again!";
+    }
+    
+    // Show the screen
+    screen.classList.remove('hidden');
+    
+    // Setup restart button
+    document.getElementById('restart-btn').onclick = () => {
+        location.reload();
+    };
+}
