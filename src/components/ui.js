@@ -73,7 +73,7 @@ export function showGameOverScreen(didWin) {
 
     // Create and play sound
     const sound = new Audio(didWin ? './assets/sounds/lizard_roaring_sound_01.wav' : './assets/sounds/horror-scream-1.wav');
-    sound.volume = 0.9;
+    sound.volume = 0.99;
     sound.play().catch(err => console.log('Audio play failed:', err));
     
     // Set background based on win/loss

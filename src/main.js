@@ -7,6 +7,7 @@ import { setupPlayer, updatePlayer, getPlayerObject } from './components/player.
 import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal } from './components/maze.js';
 import { setupLighting } from './graphics/lighting.js';
 import { initUI, updateUI, showGameOverScreen } from './components/ui.js';
+import { startBackgroundMusic, startKeyCrystalSound, updateKeyCrystalVolume, stopKeyCrystalSound, playAfterKeyMusic, startExitPortalSound, updateExitPortalVolume } from './utils/audioManager.js';
 
 // 2. Global State Variables
 let scene;
@@ -15,6 +16,7 @@ let renderer;
 let clock; 
 let gameData = { 
     isRunning: false,
+    started: false, // Game hasn't started yet
     timer: CONSTANTS.GAME.TIME_LIMIT,
     keyCollected: false,
     winState: false,
@@ -58,21 +60,64 @@ function init() {
     createMaze(scene); 
     wallColliders = getWallColliders(); 
     
-    // 3.3. Initial UI and Game State
-    gameData.isRunning = true;
+    // 3.3. Initial UI (but don't start game yet)
     initUI(); // Initialize UI references
     
     // 3.4. Setup Listeners
     window.addEventListener('resize', onWindowResize, false);
     
-    // 3.5. Start Loop
+    // 3.5. Setup Start Button
+    setupStartButton();
+    
+    // 3.6. Start Render Loop (but game is paused)
     animate();
-    console.log("Game loop started. Check the UI for timer updates.");
+    console.log("✓ Game initialized. Waiting for player to start...");
 }
 
-// 4. Main Game Loop (Requirement: Must render in real-time)
+// New Function: Setup Start Button
+function setupStartButton() {
+    const startButton = document.getElementById('start-game-btn');
+    const startScreen = document.getElementById('start-screen');
+    const uiOverlay = document.getElementById('ui-overlay');
+    
+    if (!startButton) {
+        console.error("Start button not found!");
+        return;
+    }
+    
+    startButton.addEventListener('click', () => {
+        console.log("🎮 Starting game...");
+        
+        // Hide start screen
+        startScreen.classList.add('hidden');
+        
+        // Show game UI
+        uiOverlay.classList.remove('hidden');
+        
+        // Start all audio
+        startBackgroundMusic();
+        startKeyCrystalSound();
+        
+        // Start the game
+        gameData.isRunning = true;
+        gameData.started = true;
+        
+        // Reset clock
+        clock.start();
+        
+        console.log("✅ Game started!");
+    });
+}
+
+// 4. Main Game Loop
 function animate() {
     requestAnimationFrame(animate);
+
+    // Always render the scene (even before game starts)
+    if (!gameData.started) {
+        renderer.render(scene, camera);
+        return;
+    }
 
     if (!gameData.isRunning) {
         updateUI(gameData); // Update UI to show win/loss state one last time
@@ -87,10 +132,25 @@ function animate() {
     updateAnimations(deltaTime, elapsedTime);
     updatePlayer(deltaTime, gameData, wallColliders); 
 
-    // Check Objective Collisions (Requirement G)
-    checkObjectiveCollisions(playerObject, getKeyCrystal(), getExitPortal()); 
+    // 4.2. Get references to key and exit (get once, use multiple times)
+    const key = getKeyCrystal();
+    const exit = getExitPortal();
 
-    // 4.2. Update Game Timer (Requirement G)
+    // 4.3. Update spatial audio volumes based on distance
+    if (key && !gameData.keyCollected) {
+        const distanceToKey = playerObject.position.distanceTo(key.position);
+        updateKeyCrystalVolume(distanceToKey);
+    }
+    
+    if (exit && gameData.keyCollected && !gameData.winState) {
+        const distanceToExit = playerObject.position.distanceTo(exit.position);
+        updateExitPortalVolume(distanceToExit);
+    }
+
+    // 4.4. Check Objective Collisions (reuse key and exit variables)
+    checkObjectiveCollisions(playerObject, key, exit); 
+
+    // 4.5. Update Game Timer
     gameData.timer = Math.max(0, gameData.timer - deltaTime);
     if (gameData.timer <= 0 && !gameData.winState) {
         gameData.isRunning = false;
@@ -98,15 +158,15 @@ function animate() {
         showGameOverScreen(false); // Show loss screen
     }
 
-    // 4.3. Update UI (Required every frame)
+    // 4.6. Update UI
     updateUI(gameData);
     
-    // 4.4. Render the Scene
+    // 4.7. Render the Scene
     renderer.render(scene, camera);
 }
 
 
-// 5. Game Logic: Objective Collision Checks (Requirement G)
+// 5. Game Logic: Objective Collision Checks
 
 /**
  * Handles collision/proximity checks for the Key and Exit Portal.
@@ -124,9 +184,12 @@ function checkObjectiveCollisions(player, key, exit) {
         const distSq = player.position.distanceToSquared(key.position); 
 
         if (distSq < collectionDistSq) {
-            // Key Collected! (Requirement G)
+            // Key Collected!
             gameData.keyCollected = true;
             removeKeyCrystal();
+            stopKeyCrystalSound();
+            playAfterKeyMusic();
+            startExitPortalSound();
             console.log("🔑 Key collected! Find the exit!");
         }
     }
@@ -136,11 +199,11 @@ function checkObjectiveCollisions(player, key, exit) {
         const distSq = player.position.distanceToSquared(exit.position);
         
         if (distSq < collectionDistSq) {
-            // Player reached the exit with the key! (Requirement G)
+            // Player reached the exit with the key!
             gameData.winState = true;
             gameData.isRunning = false;
             
-            // Visual cue for winning: Change exit color (Requirement D)
+            // Visual cue for winning: Change exit color
             const exitMaterial = exit.material;
             exitMaterial.color.setHex(CONSTANTS.COLOR.WIN_GLOW);
             exitMaterial.emissive.setHex(CONSTANTS.COLOR.WIN_GLOW);
