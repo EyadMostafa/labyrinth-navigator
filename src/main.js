@@ -68,7 +68,16 @@ function init() {
     
     // 3.5. Setup Start Button
     setupStartButton();
-    
+
+    // Force video to play (add this)
+    const startVideo = document.getElementById('start-video');
+    if (startVideo) {
+        startVideo.play().catch(err => console.log('Video autoplay blocked:', err));
+    }
+
+    // 3.6. Setup Listeners
+    window.addEventListener('resize', onWindowResize, false);
+
     // 3.6. Start Render Loop (but game is paused)
     animate();
     console.log("✓ Game initialized. Waiting for player to start...");
@@ -79,6 +88,7 @@ function setupStartButton() {
     const startButton = document.getElementById('start-game-btn');
     const startScreen = document.getElementById('start-screen');
     const uiOverlay = document.getElementById('ui-overlay');
+    const startVideo = document.getElementById('start-video');
     
     if (!startButton) {
         console.error("Start button not found!");
@@ -87,6 +97,11 @@ function setupStartButton() {
     
     startButton.addEventListener('click', () => {
         console.log("🎮 Starting game...");
+        // Stop and remove video to save resources
+        if (startVideo) {
+            startVideo.pause();
+            startVideo.src = '';
+        }
         
         // Hide start screen
         startScreen.classList.add('hidden');
