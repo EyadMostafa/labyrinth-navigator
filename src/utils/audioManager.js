@@ -34,7 +34,7 @@ export function playAfterKeyMusic() {
     
     backgroundMusicAfterKey = new Audio('./assets/sounds/bugs-bats-and-bells-soundscape.wav');
     backgroundMusicAfterKey.loop = true;
-    backgroundMusicAfterKey.volume = 0.99;
+    backgroundMusicAfterKey.volume = 0.8;
     backgroundMusicAfterKey.play().catch(err => console.log('Intense music failed:', err));
 }
 
@@ -98,7 +98,7 @@ export function updateKeyCrystalVolume(distance, maxDistance = 20) {
     
     // Calculate volume based on distance (inverse relationship)
     const volume = Math.max(0, 1 - (distance / maxDistance));
-    keyCrystalSound.volume = volume * 0.5; // Max 50% volume
+    keyCrystalSound.volume = volume * 0.3; // Max 50% volume
 }
 
 /**
@@ -132,5 +132,5 @@ export function updateExitPortalVolume(distance, maxDistance = 25) {
     if (!exitPortalSound) return;
     
     const volume = Math.max(0, 1 - (distance / maxDistance));
-    exitPortalSound.volume = volume * 0.6; // Max 60% volume
+    exitPortalSound.volume = volume * 0.45; // Max 60% volume
 }
