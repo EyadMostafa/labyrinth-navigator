@@ -2,6 +2,7 @@
 // Handles the player entity, first-person camera, and all user input (WASD, Mouse Look).
 
 import * as CONSTANTS from '../utils/constants.js';
+import { playFootstep, stopFootstep } from '../utils/audioManager.js';
 
 let player; // THREE.Object3D container for position and rotation (The invisible player body)
 let camera;
@@ -26,7 +27,7 @@ export function setupPlayer(sceneInstance, cameraInstance) {
     player.position.set(0, 0, 0); 
     sceneInstance.add(player);
 
-    // Attach the camera to the player object and set the eye level height (Requirement B)
+    // Attach the camera to the player object and set the eye level height
     camera.position.set(0, CONSTANTS.PLAYER.HEIGHT, 0); 
     player.add(camera);
 
@@ -42,7 +43,7 @@ export function setupPlayer(sceneInstance, cameraInstance) {
 
 /**
  * Updates the player's position and rotation based on input state.
- * Called every frame by main.js. (Requirements B, E)
+ * Called every frame by main.js.
  * @param {number} deltaTime - Time elapsed since the last frame.
  * @param {object} gameData - Reference to the main game state.
  * @param {Array<THREE.Box3>} wallColliders - List of bounding boxes for walls.
@@ -61,22 +62,23 @@ export function updatePlayer(deltaTime, gameData, wallColliders) {
     let deltaX = 0;
     let deltaZ = 0;
     
-    // Determine movement direction based on keys (Requirements E)
-    // FIX: Swapped logic for W and S keys.
-    if (keys.w) { deltaZ += moveDistance; } // W: Forward (positive Z movement in the world direction)
-    if (keys.s) { deltaZ -= moveDistance; } // S: Backward (negative Z movement)
-    if (keys.d) { deltaX += moveDistance; }
-    if (keys.a) { deltaX -= moveDistance; }
+    // Determine movement direction based on keys
+    if (keys.w) { deltaZ += moveDistance; } // W: Forward
+    if (keys.s) { deltaZ -= moveDistance; } // S: Backward
+    if (keys.d) { deltaX += moveDistance; } // D: Right
+    if (keys.a) { deltaX -= moveDistance; } // A: Left
 
     if (deltaX !== 0 || deltaZ !== 0) {
+        // Play footstep sound when moving
+        playFootstep();
+        
         // Calculate proposed movement vector
         const moveVector = forward.multiplyScalar(deltaZ).add(right.multiplyScalar(deltaX));
         
         // --- 1. Attempt movement on the XZ plane (Horizontal) ---
-        
         const proposedPosition = currentPosition.clone().add(moveVector);
         
-        // --- 2. Collision Check (Requirement G) ---
+        // --- 2. Collision Check ---
         if (!checkCollision(proposedPosition, wallColliders)) {
             // No collision detected, apply the position change
             player.position.copy(proposedPosition);
@@ -96,6 +98,9 @@ export function updatePlayer(deltaTime, gameData, wallColliders) {
                 }
             }
         }
+    } else {
+        // Stop footstep sound when not moving
+        stopFootstep();
     }
     
     // Lock player height to ground level (Y-coordinate is fixed at 0)
@@ -105,7 +110,7 @@ export function updatePlayer(deltaTime, gameData, wallColliders) {
 }
 
 
-// --- Private Functions: Collision Detection (Requirement G) ---
+// --- Private Functions: Collision Detection ---
 
 /**
  * Checks if the proposed player position collides with any wall collider.
@@ -127,23 +132,26 @@ function checkCollision(proposedPosition, colliders) {
 }
 
 
-// --- Private Functions: Input Handling (Unchanged) ---
+// --- Private Functions: Input Handling ---
 function setupInputListeners() {
     document.addEventListener('keydown', onKeyDown, false);
     document.addEventListener('keyup', onKeyUp, false);
 }
+
 function onKeyDown(event) {
     const key = event.key.toLowerCase();
     if (key in keys) {
         keys[key] = true;
     }
 }
+
 function onKeyUp(event) {
     const key = event.key.toLowerCase();
     if (key in keys) {
         keys[key] = false;
     }
 }
+
 function setupPointerLock() {
     const element = document.body;
     element.addEventListener('click', () => {
@@ -156,6 +164,7 @@ function setupPointerLock() {
     document.addEventListener('webkitpointerlockchange', onPointerLockChange, false);
     document.addEventListener('mousemove', onMouseMove, false);
 }
+
 function onPointerLockChange() {
     if (document.pointerLockElement === document.body ||
         document.mozPointerLockElement === document.body ||
@@ -167,6 +176,7 @@ function onPointerLockChange() {
         console.log("Pointer Lock Deactivated.");
     }
 }
+
 function onMouseMove(event) {
     if (!isPointerLocked) return;
     const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
@@ -179,7 +189,7 @@ function onMouseMove(event) {
 }
 
 
-// --- Public Accessors and Mutators (Unchanged) ---
+// --- Public Accessors and Mutators ---
 export function getPlayerObject() { return player; }
 export function getPlayerKeys() { return keys; }
 export function setPlayerPosition(x, z) { player.position.set(x, 0, z); }

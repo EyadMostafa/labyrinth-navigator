@@ -60,3 +60,53 @@ export function updateUI(gameData) {
         }
     }
 }
+
+/**
+ * Shows the game over screen with win/loss message
+ * @param {boolean} didWin - True if player won, false if lost
+ */
+export function showGameOverScreen(didWin) {
+    const screen = document.getElementById('game-over-screen');
+    const title = document.getElementById('result-title');
+    const message = document.getElementById('result-message');
+    const message2 = document.getElementById('result-message2');
+
+    // Create and play sound
+    const sound = new Audio(didWin ? './assets/sounds/lizard_roaring_sound_01.wav' : './assets/sounds/horror-scream-1.wav');
+    sound.volume = 0.6;
+    sound.play().catch(err => console.log('Audio play failed:', err));
+    
+    // Set background based on win/loss
+    if (didWin) {
+        // Win: Gradient background (green/cyan theme)
+        //screen.style.background = 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)';
+        screen.style.backgroundImage = "url('./assets/images/dungeon gate.jpg')";
+        screen.style.backgroundSize = 'cover';
+        screen.style.backgroundPosition = "center 21%";
+        
+        title.textContent = "YOU ESCAPED!";
+        title.style.color = "#00ffff";
+        message.textContent = "You have survived the Entrance. Now, the Labyrinth begins to breathe.";
+        message2.textContent = "Level 1 survived. The darkness is adapting to your movements.";
+        message2.style.color = "#820303";
+    } else {
+        // Loss: Dark red gradient
+        //screen.style.background = 'linear-gradient(135deg, #2d0a0a 0%, #4a0e0e 50%, #661414 100%)';
+        screen.style.backgroundImage = "url('./assets/images/bloody horror background.jfif')";
+        screen.style.backgroundSize = 'cover';
+        
+        title.textContent = "TIME'S UP!";
+        title.style.color = "#ff4444";
+        message.textContent = "You failed to escape in time.";
+        message2.textContent = "The Labyrinth has claimed a new resident.";
+        message2.style.color = "#820303";
+    }
+    
+    // Show the screen
+    screen.classList.remove('hidden');
+    
+    // Setup restart button
+    document.getElementById('restart-btn').onclick = () => {
+        location.reload();
+    };
+}
