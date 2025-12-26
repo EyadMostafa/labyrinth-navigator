@@ -4,7 +4,7 @@
 // 1. Module Imports
 import * as CONSTANTS from './utils/constants.js';
 import { setupPlayer, updatePlayer, getPlayerObject } from './components/player.js'; 
-import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal } from './components/maze.js';
+import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal , nextLevel, getCurrentLevelIndex } from './components/maze.js';
 import { setupLighting } from './graphics/lighting.js';
 import { initUI, updateUI, showGameOverScreen } from './components/ui.js';
 import { startBackgroundMusic, startKeyCrystalSound, updateKeyCrystalVolume, stopKeyCrystalSound, playAfterKeyMusic, startExitPortalSound, updateExitPortalVolume } from './utils/audioManager.js';
@@ -189,42 +189,61 @@ function animate() {
  * @param {THREE.Mesh} key - The key crystal mesh.
  * @param {THREE.Mesh} exit - The exit portal mesh.
  */
+// --- src/main.js ---
+
+/**
+ * Handles collision/proximity checks for the Key and Exit Portal.
+ * Uses a "Flat Distance" check (ignoring height) to make collection easier.
+ */
 function checkObjectiveCollisions(player, key, exit) {
-    // Squared distance check is more efficient than calculating the square root
-    const collectionDistSq = CONSTANTS.GAME.COLLECTION_DISTANCE ** 2;
+    const collectionDist = CONSTANTS.GAME.COLLECTION_DISTANCE;
 
-    // --- Key Collection Logic ---
+    // Helper: Calculate distance ignoring Height (Y-axis)
+    const getFlatDistance = (obj1, obj2) => {
+        const dx = obj1.position.x - obj2.position.x;
+        const dz = obj1.position.z - obj2.position.z;
+        return Math.sqrt(dx * dx + dz * dz);
+    };
+
+    // --- 1. Key Collection Logic ---
     if (!gameData.keyCollected && key) {
-        // Calculate the squared distance between player and key
-        const distSq = player.position.distanceToSquared(key.position); 
-
-        if (distSq < collectionDistSq) {
-            // Key Collected!
+        if (getFlatDistance(player, key) < collectionDist) {
             gameData.keyCollected = true;
             removeKeyCrystal();
             stopKeyCrystalSound();
-            playAfterKeyMusic();
+            if (typeof playAfterKeyMusic === 'function') playAfterKeyMusic();
             startExitPortalSound();
-            console.log("🔑 Key collected! Find the exit!");
+            console.log("🔑 Key collected!");
         }
     }
 
-    // --- Exit Activation Logic ---
+    // --- 2. Exit Logic (Stops the Loop!) ---
     if (gameData.keyCollected && !gameData.winState && exit) {
-        const distSq = player.position.distanceToSquared(exit.position);
-        
-        if (distSq < collectionDistSq) {
-            // Player reached the exit with the key!
-            gameData.winState = true;
-            gameData.isRunning = false;
+        if (getFlatDistance(player, exit) < collectionDist) {
             
-            // Visual cue for winning: Change exit color
-            const exitMaterial = exit.material;
-            exitMaterial.color.setHex(CONSTANTS.COLOR.WIN_GLOW);
-            exitMaterial.emissive.setHex(CONSTANTS.COLOR.WIN_GLOW);
-            
-            console.log("🎉 You Escaped! Game Won!");
-            showGameOverScreen(true); // Show win screen
+            // GET CURRENT STATUS
+            const currentLevel = getCurrentLevelIndex();
+            const totalLevels = CONSTANTS.MAZE.LEVELS.length;
+
+            // CHECK: Is there another level after this one?
+            if (currentLevel + 1 < totalLevels) {
+                // YES -> Load Next Level
+                console.log("Loading Level " + (currentLevel + 2));
+                nextLevel();
+                
+                // Reset State
+                wallColliders = getWallColliders(); 
+                gameData.keyCollected = false;
+                gameData.timer = CONSTANTS.GAME.TIME_LIMIT; 
+                stopKeyCrystalSound();
+                
+            } else {
+                // NO -> WE WIN! (Stop the game)
+                console.log("🎉 All Levels Complete!");
+                gameData.winState = true;
+                gameData.isRunning = false; // <--- Stops the loop
+                showGameOverScreen(true);   // <--- Shows Win Screen
+            }
         }
     }
 }

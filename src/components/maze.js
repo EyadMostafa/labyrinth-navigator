@@ -8,9 +8,11 @@ let scene;
 let wallColliders = []; // Array of THREE.Box3 objects for collision
 let keyCrystal;
 let exitPortal;
+let levelObjects = [];
 let objectsToAnimate = [];
 let textureLoader = new THREE.TextureLoader();
 const tempBox = new THREE.Box3(); // Reusable temporary Box3 object
+let currentLevelIndex = 0;
 
 // --- Public Functions ---
 
@@ -21,10 +23,11 @@ const tempBox = new THREE.Box3(); // Reusable temporary Box3 object
  */
 export function createMaze(sceneInstance) {
     scene = sceneInstance;
+    clearLevel();
     wallColliders = []; // Reset list
 
     // Load a simple repeating texture for the walls (Requirement D)
-    const wallTexture = textureLoader.load('https://placehold.co/100x100/444444/333333?text=BRICK');
+    const wallTexture = textureLoader.load('https://img.pikbest.com/wp/202344/brick-wall-texture-background-of-textured-in-chocolate-brown-shade_9933294.jpg!w700wp');
     wallTexture.wrapS = THREE.RepeatWrapping;
     wallTexture.wrapT = THREE.RepeatWrapping;
     wallTexture.repeat.set(2, 1);
@@ -36,14 +39,34 @@ export function createMaze(sceneInstance) {
     });
     
     // Floor Material
+    // --- Floor Texture Setup ---
+    // 1. Load the image (Use relative path!)
+    const floorTexture = textureLoader.load('./assets/images/floor_texture.jpg');
+
+    // 2. Make it tile (Repeat) so it isn't blurry
+    floorTexture.wrapS = THREE.RepeatWrapping;
+    floorTexture.wrapT = THREE.RepeatWrapping;
+    
+    // 3. How many times to repeat? 
+    // (e.g., 10x10 tiles. Increase this number if the floor looks too huge)
+    floorTexture.repeat.set(8, 8); 
+
+    // 4. Update the Material
     const floorMaterial = new THREE.MeshPhongMaterial({
-        color: CONSTANTS.COLOR.FLOOR,
+        map: floorTexture,        // Apply the image
         side: THREE.DoubleSide
+        // Note: You can add 'color: 0xffffff' to tint it, or remove color to see raw image
     });
 
 
     // --- 1. Grid Iteration and Object Placement (Requirement A) ---
-    const data = CONSTANTS.MAZE.LEVEL_DATA;
+    // NEW WAY: Check if we ran out of levels, loop back to start if needed
+    if (currentLevelIndex >= CONSTANTS.MAZE.LEVELS.length) {
+        currentLevelIndex = 0;
+    }
+
+    // Load the correct level based on the index
+    const data = CONSTANTS.MAZE.LEVELS[currentLevelIndex];
     const size = CONSTANTS.MAZE.GRID_UNIT;
     const height = CONSTANTS.MAZE.WALL_HEIGHT;
     const width = CONSTANTS.MAZE.WALL_THICKNESS;
@@ -83,7 +106,7 @@ export function createMaze(sceneInstance) {
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true; 
     scene.add(floor);
-
+    levelObjects.push(floor);
 
     return { keyCrystal, exitPortal };
 }
@@ -114,7 +137,18 @@ export function updateAnimations(deltaTime, elapsedTime) {
         }
     }
 }
-
+/**
+ * Switches to the next level index and rebuilds the maze.
+ */
+export function nextLevel() {
+    // 1. Increment the level counter
+    currentLevelIndex++;
+    
+    // 2. Re-run createMaze to build the new level
+    // (createMaze will handle clearing the old walls automatically 
+    // IF you updated it to use the new "clearLevel" logic I sent before)
+    return createMaze(scene);
+}
 /**
  * Removes the key crystal from the scene and stops its animation.
  */
@@ -156,6 +190,7 @@ function createWall(x, z, size, height, width, material) {
     
     scene.add(wall);
     
+    levelObjects.push(wall);
     // Generate and store the collision bounding box (AABB)
     wallColliders.push(tempBox.setFromObject(wall).clone());
 }
@@ -174,6 +209,7 @@ function createKeyCrystal(x, z) {
     keyCrystal.isKey = true; 
     keyCrystal.castShadow = true;
     scene.add(keyCrystal);
+    levelObjects.push(keyCrystal);
     objectsToAnimate.push(keyCrystal);
 
     return keyCrystal;
@@ -193,6 +229,7 @@ function createExitPortal(x, z) {
     exitPortal.position.set(x, CONSTANTS.MAZE.WALL_HEIGHT / 2, z);
     exitPortal.isExit = true;
     scene.add(exitPortal);
+    levelObjects.push(exitPortal);
 
     return exitPortal;
 }
@@ -205,9 +242,25 @@ function createMovingObstacle(x, z, size, height, width) {
     obstacle.position.set(x, height / 2, z);
     obstacle.castShadow = true;
     obstacle.isMovingObstacle = true;
+    levelObjects.push(obstacle);
 
     obstacle.initialPositionZ = z;
     
     scene.add(obstacle);
     return obstacle;
+}
+function clearLevel() {
+    // Remove every object created for this level
+    for (const obj of levelObjects) {
+        scene.remove(obj);
+    }
+    // Reset arrays
+    levelObjects = []; 
+    wallColliders = [];
+    objectsToAnimate = [];
+    keyCrystal = null;
+    exitPortal = null;
+}
+export function getCurrentLevelIndex() {
+    return currentLevelIndex;
 }

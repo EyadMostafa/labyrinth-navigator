@@ -10,26 +10,53 @@
 // . = Empty Path
 
 export const MAZE = {
-    // Grid definition
-    GRID_UNIT: 5,           // The size of one unit square in the maze (in Three.js units)
-    WALL_HEIGHT: 3,         // Height of the walls
-    WALL_THICKNESS: 0.5,    // Thickness of the walls (Z and X dimensions)
-    PLAYER_OFFSET_Y: 0.5,   // Y offset for moving objects to sit on the floor
+    GRID_UNIT: 5,
+    WALL_HEIGHT: 6,
+    WALL_THICKNESS: 2,
 
-    // Hard-coded Maze Layout (10x10 grid) - Defining the 3D World (Requirement A)
-    LEVEL_DATA: [
-        "WWWWWWWWWW",
-        "W.W..W.W.W",
-        "W.W.MW.K.W",
-        "W...WW.W.W",
-        "WWWW.W.W.W",
-        "W.S..W...W",
-        "W.W.WW.WWW",
-        "W.W.W..E.W",
-        "W...WWWW.W",
-        "WWWWWWWWWW"
-    ],
+    // Instead of one "LEVEL_DATA", we now have a list called "LEVELS"
+    LEVELS: [
+        // --- LEVEL 1 (Index 0) ---
+        [
+            'WWWWWWWWWWWWWW',
+            'W            W',
+            'W  S      K  W',
+            'W     WW     W',
+            'W  M  WW  E  W',
+            'W            W',
+            'WWWWWWWWWWWWWW'
+        ],
+
+        // --- LEVEL 2 (Index 1) ---
+        [
+            'WWWWWWWWWWWWWWWWWWWWW',
+            'W S W       W K     W',
+            'W   W WWW W W W WWW W',
+            'W     W   W   W W   W',
+            'WWWWWWW W WWWWWWW W W',
+            'W       W    M    W W',
+            'W WWWWWWWWWWWWWWWWW W',
+            'W                   W',
+            'WWWWWWWWWWWWWWWWWWW W',
+            'W         E         W',
+            'WWWWWWWWWWWWWWWWWWWWW'
+        ],
+    ]
 };
+
+// [
+//             'WWWWWWWWWWWWWWWWW',
+//             'W S      W      W',
+//             'WWW W WW W WWWW W',
+//             'W   W W     W   W',
+//             'W WWW W WWWWW W W',
+//             'W     W   M   W W',
+//             'WWWWWWWWWWWWW W W',
+//             'W      K      W W',
+//             'W WWWWWWWWWWWWW W',
+//             'W       E       W',
+//             'WWWWWWWWWWWWWWWWW'
+//         ]
 
 export const GAME = {
     TIME_LIMIT: 60,         // Time limit in seconds (Requirement G)

@@ -78,17 +78,18 @@ export function showGameOverScreen(didWin) {
     
     // Set background based on win/loss
     if (didWin) {
-        // Win: Gradient background (green/cyan theme)
-        //screen.style.background = 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)';
+        // Win: Custom background image
         screen.style.backgroundImage = "url('./assets/images/dungeon gate.jpg')";
         screen.style.backgroundSize = 'cover';
         screen.style.backgroundPosition = "center 21%";
         
-        title.textContent = "YOU ESCAPED!";
-        title.style.color = "#00ffff";
-        message.textContent = "You have survived the Entrance. Now, the Labyrinth begins to breathe.";
-        message2.textContent = "Level 1 survived. The darkness is adapting to your movements.";
-        message2.style.color = "#820303";
+        // --- UPDATED TEXT FOR FINAL VICTORY ---
+        title.textContent = "CONGRATULATIONS!";
+        title.style.color = "#00ffff"; // Cyan color
+        
+        message.textContent = "You have conquered the Labyrinth and found the way out!";
+        message2.textContent = "The darkness recedes... for now.";
+        message2.style.color = "#00ff00"; // Green color for success
     } else {
         // Loss: Dark red gradient
         //screen.style.background = 'linear-gradient(135deg, #2d0a0a 0%, #4a0e0e 50%, #661414 100%)';
