@@ -69,10 +69,50 @@ function init() {
     // 3.5. Setup Start Button
     setupStartButton();
 
-    // Force video to play (add this)
+    // 3.6. Setup Video and Sound Toggle
     const startVideo = document.getElementById('start-video');
+    const soundToggleBtn = document.getElementById('sound-toggle-btn');
+    const soundIconMuted = document.getElementById('sound-icon-muted');
+    const soundIconPlaying = document.getElementById('sound-icon-playing');
+
     if (startVideo) {
-        startVideo.play().catch(err => console.log('Video autoplay blocked:', err));
+        // Start video muted
+        startVideo.muted = true;
+        startVideo.volume = 0.7;
+        
+        // Try to autoplay (will be muted)
+        startVideo.play()
+            .then(() => console.log('✅ Video playing (muted)'))
+            .catch(err => {
+                console.log('⚠️ Video autoplay failed:', err);
+                // Try playing on any interaction
+                const playVideo = () => {
+                    startVideo.play();
+                    document.removeEventListener('click', playVideo);
+                };
+                document.addEventListener('click', playVideo, { once: true });
+            });
+        
+        // Sound toggle button functionality
+        if (soundToggleBtn) {
+            soundToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent other click handlers
+                
+                if (startVideo.muted) {
+                    // Unmute
+                    startVideo.muted = false;
+                    soundIconMuted.classList.add('hidden');
+                    soundIconPlaying.classList.remove('hidden');
+                    console.log('🔊 Sound enabled');
+                } else {
+                    // Mute
+                    startVideo.muted = true;
+                    soundIconMuted.classList.remove('hidden');
+                    soundIconPlaying.classList.add('hidden');
+                    console.log('🔇 Sound muted');
+                }
+            });
+        }
     }
 
     // 3.6. Setup Listeners
