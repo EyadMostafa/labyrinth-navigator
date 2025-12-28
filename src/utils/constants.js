@@ -16,26 +16,29 @@ export const MAZE = {
     LEVELS: [
         // --- LEVEL 1 (Index 0) ---
         [
-            'WWWWWWWWWWWWWW',
-            'W            W',
-            'W  S      K  W',
-            'W     WW     W',
-            'W  M  WW  E  W',
-            'W            W',
-            'WWWWWWWWWWWWWW'
+            "WWWWWWWWWW",
+            "W.W..W.W.W",
+            "W.W.MW.K.W",
+            "W...WW.W.W",
+            "WWWW.W.W.W",
+            "W.S..W...W",
+            "W.W.WW.WWW",
+            "W.W.W..E.W",
+            "W...WWWW.W",
+            "WWWWWWWWWW"
         ],
         // --- LEVEL 2 (Index 1) ---
         [
             'WWWWWWWWWWWWWWWWWWWWW',
-            'W S W       W K     W',
-            'W   W WWW W W W WWW W',
-            'W     W   W   W W   W',
-            'WWWWWWW W WWWWWWW W W',
-            'W       W    M    W W',
-            'W WWWWWWWWWWWWWWWWW W',
-            'W                   W',
-            'WWWWWWWWWWWWWWWWWWW W',
-            'W         E         W',
+            'W.S.W.......W.K.....W',
+            'W...W.WWW.W.W.W.WWW.W',
+            'W.....W...W...W.W...W',
+            'WWWWWWW.W.WWWWWWW.W.W',
+            'W.......W....M....W.W',
+            'W.WWWWWWWWWWWWWWWWW.W',
+            'W...................W',
+            'WWWWWWWWWWWWWWWWWWW.W',
+            'W.........E.........W',
             'WWWWWWWWWWWWWWWWWWWWW'
         ],
         // --- LEVEL 3 (Index 2) - THE HORROR LEVEL ---
