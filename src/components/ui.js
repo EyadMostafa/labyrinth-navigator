@@ -1,4 +1,4 @@
-// --- src/components/ui.js (FIXED VERSION) ---
+// --- src/components/ui.js (PHASE 4: ENTITY TIMER UI) ---
 // Handles all HTML overlay updates, including the timer and game status.
 
 import * as CONSTANTS from '../utils/constants.js';
@@ -7,6 +7,7 @@ import * as CONSTANTS from '../utils/constants.js';
 let timeElement;
 let statusElement;
 let instructionElement;
+let entityTimerElement; // PHASE 4: Entity timer display
 
 /**
  * Initializes UI module and gets references to DOM elements.
@@ -15,10 +16,16 @@ export function initUI() {
     timeElement = document.getElementById(CONSTANTS.GAME.UI_TIMER_ELEMENT);
     statusElement = document.getElementById(CONSTANTS.GAME.UI_STATUS_ELEMENT);
     instructionElement = document.getElementById(CONSTANTS.GAME.UI_INSTRUCTION_ELEMENT);
+    entityTimerElement = document.getElementById('entity-timer-display'); // PHASE 4
     
     // Set initial instruction
     if (instructionElement) {
         instructionElement.textContent = "Click to Look | WASD to Move | Find the Key (Green)";
+    }
+    
+    // Hide entity timer initially
+    if (entityTimerElement) {
+        entityTimerElement.classList.add('hidden');
     }
     
     // DEBUG: Verify transition screen exists
@@ -66,6 +73,49 @@ export function updateUI(gameData) {
             statusElement.textContent = "KEY STATUS: Missing";
             statusElement.style.color = 'white';
         }
+    }
+}
+
+/**
+ * PHASE 4: Shows the entity timer UI element
+ */
+export function showEntityTimer() {
+    if (entityTimerElement) {
+        entityTimerElement.classList.remove('hidden');
+        console.log("👹 Entity timer UI shown");
+    }
+}
+
+/**
+ * PHASE 4: Hides the entity timer UI element
+ */
+export function hideEntityTimer() {
+    if (entityTimerElement) {
+        entityTimerElement.classList.add('hidden');
+        console.log("✅ Entity timer UI hidden");
+    }
+}
+
+/**
+ * PHASE 4: Updates the entity timer display
+ * @param {number} timer - Current entity timer value
+ */
+export function updateEntityTimer(timer) {
+    if (!entityTimerElement) return;
+    
+    const timerDisplay = timer.toFixed(1);
+    entityTimerElement.textContent = `ENTITY: ${timerDisplay}s`;
+    
+    // Color changes based on urgency
+    if (timer <= 1.0) {
+        entityTimerElement.style.color = '#ff0000'; // Red - CRITICAL
+        entityTimerElement.style.textShadow = '0 0 10px #ff0000';
+    } else if (timer <= 2.5) {
+        entityTimerElement.style.color = '#ff6600'; // Orange - Warning
+        entityTimerElement.style.textShadow = '0 0 10px #ff6600';
+    } else {
+        entityTimerElement.style.color = '#ffff00'; // Yellow - Safe
+        entityTimerElement.style.textShadow = '0 0 10px #ffff00';
     }
 }
 
@@ -122,6 +172,34 @@ export function showGameOverScreen(didWin) {
     // Setup restart button
     document.getElementById('restart-btn').onclick = () => {
         location.reload();
+    };
+}
+
+/**
+ * PHASE 4: Shows the entity death screen with jumpscare video
+ */
+export function showEntityDeathScreen() {
+    const screen = document.getElementById('entity-death-screen');
+    const video = document.getElementById('entity-death-video');
+    
+    if (!screen || !video) {
+        console.error("❌ Entity death screen or video not found!");
+        return;
+    }
+    
+    // Show the screen
+    screen.classList.remove('hidden');
+    
+    // Play the jumpscare video
+    video.currentTime = 0;
+    video.play().catch(err => console.log('Video play failed:', err));
+    
+    console.log("💀 Entity death screen displayed with jumpscare video");
+    
+    // After video ends, show loss screen
+    video.onended = () => {
+        screen.classList.add('hidden');
+        showGameOverScreen(false); // Show loss screen
     };
 }
 

@@ -1,5 +1,5 @@
-// --- src/utils/audioManager.js (FIXED) ---
-// Handles all game audio (music, footsteps, spatial sounds)
+// --- src/utils/audioManager.js (PHASE 2: FALSE ECHO SYSTEM) ---
+// Handles all game audio (music, footsteps, spatial sounds, and FALSE ECHO)
 
 let backgroundMusic = null;
 let backgroundMusicAfterKey = null;
@@ -7,8 +7,23 @@ let footstepSound = null;
 let footstepCooldown = 0;
 let keyCrystalSound = null;
 let exitPortalSound = null;
-let levelTransitionSound = null; // For next level page
-let levelTransitionSound2 = null; // FIXED: Added missing variable
+let levelTransitionSound = null;
+let levelTransitionSound2 = null;
+
+// PHASE 2: False Echo System Variables
+let falseEchoTimer = null;
+let falseEchoActive = false;
+let lastEchoTime = 0;
+let currentEchoSound = null;
+
+const FALSE_ECHO_DELAY = 0.5; // Delay before playing echo (seconds)
+const FALSE_ECHO_COOLDOWN = 3.0; // Minimum time between echoes (seconds)
+
+// Pool of creepy sounds for false echo (ONLY footsteps and whispers)
+const FALSE_ECHO_SOUNDS = [
+    './assets/sounds/footsteps_sneakers_trainers_leather_large_running_on_hard_ground_road_concrete_etc_97389_zapsplat_foley.mp3',
+    './assets/sounds/ghost-whispers.wav',
+];
 
 /**
  * Initializes and starts background music for a specific level
@@ -183,7 +198,6 @@ export function playLevelTransitionSound() {
     levelTransitionSound.play().catch(err => console.log('Transition sound 1 failed:', err));
     console.log('🎵 Level transition sound 1 playing');
     
-    // FIXED: Now properly declared at the top
     levelTransitionSound2 = new Audio('./assets/sounds/ghost-whispers.wav');
     levelTransitionSound2.volume = 0.6;
     levelTransitionSound2.play().catch(err => console.log('Transition sound 2 failed:', err));
@@ -199,7 +213,6 @@ export function stopLevelTransitionSound() {
         levelTransitionSound.currentTime = 0;
         levelTransitionSound = null;
     }
-    // FIXED: Also stop the second sound
     if (levelTransitionSound2) {
         levelTransitionSound2.pause();
         levelTransitionSound2.currentTime = 0;
@@ -217,5 +230,115 @@ export function stopAllSounds() {
     stopKeyCrystalSound();
     stopExitPortalSound();
     stopLevelTransitionSound();
+    stopFalseEcho(); // PHASE 2: Also stop false echo
     console.log('🔇 All sounds stopped');
+}
+
+// ==========================================
+// PHASE 2: FALSE ECHO AUDIO SYSTEM
+// ==========================================
+
+/**
+ * Activates the false echo system (Level 3 only, after getting crystal)
+ */
+export function activateFalseEcho() {
+    falseEchoActive = true;
+    lastEchoTime = Date.now();
+    console.log("👻 False echo system ACTIVATED!");
+}
+
+/**
+ * Deactivates the false echo system
+ */
+export function deactivateFalseEcho() {
+    falseEchoActive = false;
+    cancelFalseEcho();
+    console.log("✅ False echo system DEACTIVATED");
+}
+
+/**
+ * Updates the false echo system - call this every frame
+ * @param {boolean} isPlayerMoving - True if player is currently moving
+ */
+export function updateFalseEcho(isPlayerMoving) {
+    if (!falseEchoActive) return;
+
+    const now = Date.now();
+
+    // If player is moving, cancel any pending echo
+    if (isPlayerMoving) {
+        cancelFalseEcho();
+        return;
+    }
+
+    // Player has stopped moving
+    if (!falseEchoTimer) {
+        // Check if enough time has passed since last echo (cooldown)
+        if (now - lastEchoTime >= FALSE_ECHO_COOLDOWN * 1000) {
+            // Start the delay timer
+            falseEchoTimer = setTimeout(() => {
+                playFalseEcho();
+                falseEchoTimer = null;
+            }, FALSE_ECHO_DELAY * 1000);
+            
+            console.log("👻 False echo timer started... waiting", FALSE_ECHO_DELAY, "seconds");
+        }
+    }
+}
+
+/**
+ * Plays a random creepy sound from the false echo pool
+ */
+function playFalseEcho() {
+    if (!falseEchoActive) return;
+
+    // Pick a random sound from the pool
+    const randomIndex = Math.floor(Math.random() * FALSE_ECHO_SOUNDS.length);
+    const soundFile = FALSE_ECHO_SOUNDS[randomIndex];
+
+    // Stop any currently playing echo
+    if (currentEchoSound && !currentEchoSound.paused) {
+        currentEchoSound.pause();
+        currentEchoSound.currentTime = 0;
+    }
+
+    // Play the new echo sound
+    currentEchoSound = new Audio(soundFile);
+    currentEchoSound.volume = 0.4; // Quieter than normal sounds (subtle horror)
+    currentEchoSound.play().catch(err => console.log('False echo failed:', err));
+    
+    lastEchoTime = Date.now();
+    console.log("👻 FALSE ECHO PLAYED:", soundFile);
+}
+
+/**
+ * Cancels any pending false echo timer
+ */
+function cancelFalseEcho() {
+    if (falseEchoTimer) {
+        clearTimeout(falseEchoTimer);
+        falseEchoTimer = null;
+    }
+}
+
+/**
+ * Stops the false echo system completely
+ */
+export function stopFalseEcho() {
+    cancelFalseEcho();
+    
+    if (currentEchoSound && !currentEchoSound.paused) {
+        currentEchoSound.pause();
+        currentEchoSound.currentTime = 0;
+        currentEchoSound = null;
+    }
+    
+    falseEchoActive = false;
+}
+
+/**
+ * Returns whether false echo is currently active
+ */
+export function isFalseEchoActive() {
+    return falseEchoActive;
 }

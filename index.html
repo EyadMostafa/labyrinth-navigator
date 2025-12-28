@@ -344,6 +344,15 @@
         <div id="time-display" class="ui-panel">TIME: 60.0</div>
         <div id="status-display" class="ui-panel">KEY STATUS: Missing</div>
         <div id="instruction-display" class="ui-panel text-sm">Click to Start Look & WASD to Move</div>
+        <!-- PHASE 4: Entity Timer Display -->
+        <div id="entity-timer-display" class="hidden ui-panel text-yellow-400 text-xl font-black">ENTITY: 5.0s</div>
+    </div>
+
+    <!-- PHASE 4: Entity Death Screen (Jumpscare Video) -->
+    <div id="entity-death-screen" class="hidden fixed inset-0 z-[200] bg-black">
+        <video id="entity-death-video" class="w-full h-full object-cover" preload="auto">
+            <source src="./assets/videos/Trapped soul transition.mp4" type="video/mp4">
+        </video>
     </div>
 
     <!-- Win/Loss Screen -->
@@ -393,7 +402,7 @@
                 name: "Trapped Soul",
                 subtitle: "Level 3: Trapped Soul",
                 difficulty: "Hard",
-                timeLimit: 60,
+                timeLimit: 120,
                 video: "./assets/videos/dark soul.mp4",
                 flavorText: '"The final challenge awaits. Only the brave escape the labyrinth\'s deepest depths."',
                 startButtonColor: "bg-red-600 hover:bg-red-700"

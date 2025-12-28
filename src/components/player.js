@@ -1,15 +1,20 @@
-// --- src/components/player.js ---
-// Handles the player entity, first-person camera, and all user input (WASD, Mouse Look).
+// --- src/components/player.js (PHASE 4: L KEY + ENTITY FACING) ---
+// Handles the player entity, first-person camera, and all user input (WASD, Mouse Look, L key).
 
 import * as CONSTANTS from '../utils/constants.js';
 import { playFootstep, stopFootstep } from '../utils/audioManager.js';
 
 let player; // THREE.Object3D container for position and rotation (The invisible player body)
 let camera;
-let keys = { w: false, a: false, s: false, d: false, e: false }; // Input state tracker
+let keys = { w: false, a: false, s: false, d: false, e: false, l: false }; // Input state tracker
 let isPointerLocked = false;
 let playerCollider; // Bounding box representation of the player
 const PLAYER_RADIUS = 0.5; // Player's effective width for collision
+
+// Level 3 specific variables
+let hasKeyCrystal = false; // Track if player has picked up the crystal
+let isLookingBack = false; // Track if player is pressing L key
+let originalYRotation = 0; // Store player's original Y rotation before looking back
 
 // --- Public Functions ---
 
@@ -51,8 +56,36 @@ export function setupPlayer(sceneInstance, cameraInstance) {
 export function updatePlayer(deltaTime, gameData, wallColliders) {
     if (!gameData.isRunning || !isPointerLocked) return;
 
+    // Update looking back state and handle camera rotation
+    const wasLookingBack = isLookingBack;
+    isLookingBack = keys.l;
+    
+    // Handle L key press - rotate 180° to look behind
+    if (isLookingBack && !wasLookingBack) {
+        // Player just pressed L - turn around
+        originalYRotation = player.rotation.y; // Store current rotation
+        player.rotation.y += Math.PI; // Rotate 180 degrees
+        console.log("👁️ Player turned around to look behind! (L pressed)");
+    } else if (!isLookingBack && wasLookingBack) {
+        // Player released L - turn back to original direction
+        player.rotation.y = originalYRotation; // Restore original rotation
+        console.log("👁️ Player turned back forward (L released)");
+    }
+
+    // Determine current movement speed based on player state
+    let currentSpeed = CONSTANTS.PLAYER.MOVE_SPEED;
+    
+    // Level 3: Apply speed modifications
+    if (hasKeyCrystal) {
+        currentSpeed = CONSTANTS.PLAYER.MOVE_SPEED_WITH_KEY; // 60% speed with crystal (3 units/sec)
+    }
+    
+    if (isLookingBack) {
+        currentSpeed = CONSTANTS.PLAYER.MOVE_SPEED_FACING_ENTITY; // 30% speed when looking back (1.5 units/sec)
+    }
+
     // Calculate movement distance based on speed and frame time
-    const moveDistance = CONSTANTS.PLAYER.MOVE_SPEED * deltaTime;
+    const moveDistance = currentSpeed * deltaTime;
     const currentPosition = player.position.clone();
     
     // Temporary variables to calculate the proposed new position
@@ -142,6 +175,11 @@ function onKeyDown(event) {
     const key = event.key.toLowerCase();
     if (key in keys) {
         keys[key] = true;
+        
+        // DEBUG: Log L key press
+        if (key === 'l') {
+            console.log("🔑 L key pressed! Looking back...");
+        }
     }
 }
 
@@ -149,6 +187,11 @@ function onKeyUp(event) {
     const key = event.key.toLowerCase();
     if (key in keys) {
         keys[key] = false;
+        
+        // DEBUG: Log L key release
+        if (key === 'l') {
+            console.log("🔑 L key released! Looking forward...");
+        }
     }
 }
 
@@ -194,3 +237,34 @@ export function getPlayerObject() { return player; }
 export function getPlayerKeys() { return keys; }
 export function setPlayerPosition(x, z) { player.position.set(x, 0, z); }
 export function getPlayerRadius() { return PLAYER_RADIUS; }
+export function getCamera() { return camera; }
+
+// Level 3 specific functions
+export function setHasKeyCrystal(value) { 
+    hasKeyCrystal = value; 
+    console.log("💎 Player has crystal:", hasKeyCrystal);
+}
+
+export function isPlayerMoving() {
+    return keys.w || keys.a || keys.s || keys.d;
+}
+
+/**
+ * Returns true if any movement key is currently pressed
+ */
+export function getMovementState() {
+    return {
+        moving: keys.w || keys.a || keys.s || keys.d,
+        forward: keys.w,
+        backward: keys.s,
+        left: keys.a,
+        right: keys.d
+    };
+}
+
+/**
+ * Returns whether player is currently looking back (L key pressed)
+ */
+export function isPlayerLookingBack() {
+    return isLookingBack;
+}
