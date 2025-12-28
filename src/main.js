@@ -1,13 +1,13 @@
-// --- src/main.js ---
+// --- src/main.js (WITH LEVEL SELECTION SUPPORT) ---
 // Main orchestration file. Initializes Three.js and runs the game loop.
 
 // 1. Module Imports
 import * as CONSTANTS from './utils/constants.js';
 import { setupPlayer, updatePlayer, getPlayerObject } from './components/player.js'; 
-import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal , nextLevel, getCurrentLevelIndex } from './components/maze.js';
+import { createMaze, updateAnimations, getWallColliders, getKeyCrystal, getExitPortal, removeKeyCrystal , nextLevel, getCurrentLevelIndex, setStartingLevel } from './components/maze.js';
 import { setupLighting } from './graphics/lighting.js';
-import { initUI, updateUI, showGameOverScreen } from './components/ui.js';
-import { startBackgroundMusic, startKeyCrystalSound, updateKeyCrystalVolume, stopKeyCrystalSound, playAfterKeyMusic, startExitPortalSound, updateExitPortalVolume } from './utils/audioManager.js';
+import { initUI, updateUI, showGameOverScreen, showLevelTransition } from './components/ui.js';
+import { startBackgroundMusic, startKeyCrystalSound, updateKeyCrystalVolume, stopKeyCrystalSound, playAfterKeyMusic, startExitPortalSound, updateExitPortalVolume, stopAllSounds, playLevelTransitionSound, stopLevelTransitionSound, stopExitPortalSound, stopAfterKeyMusic } from './utils/audioManager.js';
 
 // 2. Global State Variables
 let scene;
@@ -115,15 +115,12 @@ function init() {
         }
     }
 
-    // 3.6. Setup Listeners
-    window.addEventListener('resize', onWindowResize, false);
-
-    // 3.6. Start Render Loop (but game is paused)
+    // 3.7. Start Render Loop (but game is paused)
     animate();
     console.log("✓ Game initialized. Waiting for player to start...");
 }
 
-// New Function: Setup Start Button
+// New Function: Setup Start Button with Level Selection Support
 function setupStartButton() {
     const startButton = document.getElementById('start-game-btn');
     const startScreen = document.getElementById('start-screen');
@@ -137,9 +134,22 @@ function setupStartButton() {
     
     startButton.addEventListener('click', () => {
         console.log("🎮 Starting game...");
+        
+        // Get the selected level from the HTML (set by level selection menu)
+        const selectedLevel = window.getSelectedLevel ? window.getSelectedLevel() : 0;
+        console.log("📍 Selected level:", selectedLevel);
+        
+        // Set the starting level in maze.js
+        setStartingLevel(selectedLevel);
+        
+        // Rebuild the maze with the selected level
+        createMaze(scene);
+        wallColliders = getWallColliders();
+        
         // Stop and remove video to save resources
         if (startVideo) {
             startVideo.pause();
+            startVideo.currentTime = 0;
             startVideo.src = '';
         }
         
@@ -149,8 +159,8 @@ function setupStartButton() {
         // Show game UI
         uiOverlay.classList.remove('hidden');
         
-        // Start all audio
-        startBackgroundMusic();
+        // Start audio for the selected level
+        startBackgroundMusic(selectedLevel);
         startKeyCrystalSound();
         
         // Start the game
@@ -160,7 +170,7 @@ function setupStartButton() {
         // Reset clock
         clock.start();
         
-        console.log("✅ Game started!");
+        console.log("✅ Game started! Level " + (selectedLevel + 1));
     });
 }
 
@@ -209,6 +219,7 @@ function animate() {
     gameData.timer = Math.max(0, gameData.timer - deltaTime);
     if (gameData.timer <= 0 && !gameData.winState) {
         gameData.isRunning = false;
+        stopAllSounds(); // Stop all sounds on game over
         console.log("⏰ Time is up! Game Over.");
         showGameOverScreen(false); // Show loss screen
     }
@@ -222,14 +233,6 @@ function animate() {
 
 
 // 5. Game Logic: Objective Collision Checks
-
-/**
- * Handles collision/proximity checks for the Key and Exit Portal.
- * @param {THREE.Object3D} player - The player's container object.
- * @param {THREE.Mesh} key - The key crystal mesh.
- * @param {THREE.Mesh} exit - The exit portal mesh.
- */
-// --- src/main.js ---
 
 /**
  * Handles collision/proximity checks for the Key and Exit Portal.
@@ -251,38 +254,91 @@ function checkObjectiveCollisions(player, key, exit) {
             gameData.keyCollected = true;
             removeKeyCrystal();
             stopKeyCrystalSound();
-            if (typeof playAfterKeyMusic === 'function') playAfterKeyMusic();
+            
+            // Start Phase 2 music for current level
+            const currentLevel = getCurrentLevelIndex();
+            playAfterKeyMusic(currentLevel); // Pass level index for level-specific Phase 2 music
+            
             startExitPortalSound();
-            console.log("🔑 Key collected!");
+            console.log("🔑 Key collected! Phase 2 music started for Level " + (currentLevel + 1));
         }
     }
 
-    // --- 2. Exit Logic (Stops the Loop!) ---
+    // --- 2. Exit Logic ---
     if (gameData.keyCollected && !gameData.winState && exit) {
-        if (getFlatDistance(player, exit) < collectionDist) {
+        const distanceToExit = getFlatDistance(player, exit);
+        
+        if (distanceToExit < collectionDist) {
+            console.log("🎯 EXIT REACHED! Processing level completion...");
             
             // GET CURRENT STATUS
             const currentLevel = getCurrentLevelIndex();
             const totalLevels = CONSTANTS.MAZE.LEVELS.length;
 
+            console.log("📊 Current Level:", currentLevel, "/ Total Levels:", totalLevels);
+
             // CHECK: Is there another level after this one?
             if (currentLevel + 1 < totalLevels) {
-                // YES -> Load Next Level
-                console.log("Loading Level " + (currentLevel + 2));
-                nextLevel();
+                // YES -> Show Level Transition Screen
+                console.log("✅ Level " + (currentLevel + 1) + " Complete! Showing transition...");
                 
-                // Reset State
-                wallColliders = getWallColliders(); 
-                gameData.keyCollected = false;
-                gameData.timer = CONSTANTS.GAME.TIME_LIMIT; 
-                stopKeyCrystalSound();
+                // Pause the game
+                gameData.isRunning = false;
+                
+                // Stop Phase 2 music and portal sound
+                stopAfterKeyMusic();
+                stopExitPortalSound();
+                
+                // Play level transition sound
+                playLevelTransitionSound();
+                
+                // Show transition screen
+                const continueBtn = showLevelTransition(currentLevel, gameData.timer);
+                
+                // Setup continue button to load next level
+                if (continueBtn) {
+                    continueBtn.onclick = () => {
+                        const newLevelIndex = currentLevel + 1;
+                        console.log("🎮 Loading Level " + (newLevelIndex + 1));
+                        
+                        // Stop transition sound
+                        stopLevelTransitionSound();
+                        
+                        // Hide transition screen
+                        document.getElementById('level-transition-screen').classList.add('hidden');
+                        
+                        // Load next level
+                        nextLevel();
+                        
+                        // Reset game state
+                        wallColliders = getWallColliders(); 
+                        gameData.keyCollected = false;
+                        gameData.timer = CONSTANTS.GAME.TIME_LIMIT;
+                        gameData.isRunning = true; // Resume game
+                        
+                        // Start next level audio with level index
+                        startBackgroundMusic(newLevelIndex); // Level-specific background music
+                        startKeyCrystalSound();
+                        
+                        // Reset clock
+                        clock.start();
+                        
+                        console.log("✅ Level " + (newLevelIndex + 1) + " started with level-specific music!");
+                    };
+                }
                 
             } else {
                 // NO -> WE WIN! (Stop the game)
                 console.log("🎉 All Levels Complete!");
                 gameData.winState = true;
-                gameData.isRunning = false; // <--- Stops the loop
-                showGameOverScreen(true);   // <--- Shows Win Screen
+                gameData.isRunning = false;
+                
+                // Stop Phase 2 music and portal sound
+                stopAfterKeyMusic();
+                stopExitPortalSound();
+                
+                // Show Win Screen (plays win sound in ui.js)
+                showGameOverScreen(true);
             }
         }
     }

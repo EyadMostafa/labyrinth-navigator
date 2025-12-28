@@ -1,4 +1,4 @@
-// --- src/components/ui.js ---
+// --- src/components/ui.js (FIXED VERSION) ---
 // Handles all HTML overlay updates, including the timer and game status.
 
 import * as CONSTANTS from '../utils/constants.js';
@@ -19,6 +19,14 @@ export function initUI() {
     // Set initial instruction
     if (instructionElement) {
         instructionElement.textContent = "Click to Look | WASD to Move | Find the Key (Green)";
+    }
+    
+    // DEBUG: Verify transition screen exists
+    const transitionScreen = document.getElementById('level-transition-screen');
+    if (transitionScreen) {
+        console.log("✅ Level transition screen found in DOM");
+    } else {
+        console.error("❌ Level transition screen NOT found in DOM!");
     }
 }
 
@@ -71,6 +79,11 @@ export function showGameOverScreen(didWin) {
     const message = document.getElementById('result-message');
     const message2 = document.getElementById('result-message2');
 
+    if (!screen) {
+        console.error("❌ Game over screen not found!");
+        return;
+    }
+
     // Create and play sound
     const sound = new Audio(didWin ? './assets/sounds/lizard_roaring_sound_01.wav' : './assets/sounds/horror-scream-1.wav');
     sound.volume = 0.6;
@@ -79,7 +92,7 @@ export function showGameOverScreen(didWin) {
     // Set background based on win/loss
     if (didWin) {
         // Win: Custom background image
-        screen.style.backgroundImage = "url('./assets/images/dungeon gate.jpg')";
+        screen.style.backgroundImage = "url('./assets/images/final win screen.jfif')";
         screen.style.backgroundSize = 'cover';
         screen.style.backgroundPosition = "center 21%";
         
@@ -92,7 +105,6 @@ export function showGameOverScreen(didWin) {
         message2.style.color = "#00ff00"; // Green color for success
     } else {
         // Loss: Dark red gradient
-        //screen.style.background = 'linear-gradient(135deg, #2d0a0a 0%, #4a0e0e 50%, #661414 100%)';
         screen.style.backgroundImage = "url('./assets/images/bloody horror background.jfif')";
         screen.style.backgroundSize = 'cover';
         
@@ -105,9 +117,83 @@ export function showGameOverScreen(didWin) {
     
     // Show the screen
     screen.classList.remove('hidden');
+    console.log("✅ Game over screen displayed");
     
     // Setup restart button
     document.getElementById('restart-btn').onclick = () => {
         location.reload();
     };
+}
+
+/**
+ * Shows the level transition screen when player completes a level
+ * @param {number} completedLevel - The level number just completed (0-indexed)
+ * @param {number} timeRemaining - Time left on the clock
+ * @returns {HTMLElement} The continue button element
+ */
+export function showLevelTransition(completedLevel, timeRemaining) {
+    console.log("🎬 showLevelTransition() called with level:", completedLevel, "time:", timeRemaining);
+    
+    const screen = document.getElementById('level-transition-screen');
+    const background = document.getElementById('transition-background');
+    const completedText = document.getElementById('completed-level-text');
+    const nextLevelText = document.getElementById('next-level-text');
+    const timeDisplay = document.getElementById('time-remaining');
+    const continueBtn = document.getElementById('continue-btn');
+    
+    // DEBUG: Check if all elements exist
+    console.log("🔍 Elements found:", {
+        screen: !!screen,
+        background: !!background,
+        completedText: !!completedText,
+        nextLevelText: !!nextLevelText,
+        timeDisplay: !!timeDisplay,
+        continueBtn: !!continueBtn
+    });
+    
+    if (!screen) {
+        console.error('❌ Level transition screen not found!');
+        return null;
+    }
+    
+    // Set level-specific background image
+    const backgrounds = [
+        './assets/images/dungeon gate.jpg',  // After Level 1 (index 0)
+        './assets/images/dungeon gate.jpg',  // After Level 2 (index 1)
+    ];
+    
+    if (background && backgrounds[completedLevel]) {
+        background.style.backgroundImage = `url('${backgrounds[completedLevel]}')`;
+        console.log("🖼️ Background set to:", backgrounds[completedLevel]);
+    }
+    
+    // Update text
+    if (completedText) {
+        completedText.textContent = `Level ${completedLevel + 1} Conquered!`;
+        console.log("✏️ Completed text set:", completedText.textContent);
+    }
+    
+    const levelNames = ["Shadow Passage", "The Haunted Halls", "Trapped Soul"];
+    if (nextLevelText) {
+        nextLevelText.textContent = `Level ${completedLevel + 2}: ${levelNames[completedLevel + 1] || 'Unknown'}`;
+        console.log("✏️ Next level text set:", nextLevelText.textContent);
+    }
+    
+    if (timeDisplay) {
+        timeDisplay.textContent = `${timeRemaining.toFixed(1)}s`;
+        console.log("⏱️ Time display set:", timeDisplay.textContent);
+    }
+    
+    // Show the screen
+    screen.classList.remove('hidden');
+    console.log("✅ Level transition screen should now be visible");
+    console.log("🔍 Screen classes after removal:", screen.className);
+    
+    if (!continueBtn) {
+        console.error("❌ Continue button not found!");
+    } else {
+        console.log("✅ Continue button found and will be returned");
+    }
+    
+    return continueBtn;
 }

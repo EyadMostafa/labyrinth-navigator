@@ -1,4 +1,4 @@
-// --- src/components/maze.js ---
+// --- src/components/maze.js (WITH STARTING LEVEL SUPPORT) ---
 // Handles maze geometry generation, object placement, and scene animations.
 
 import * as CONSTANTS from '../utils/constants.js';
@@ -15,6 +15,20 @@ const tempBox = new THREE.Box3(); // Reusable temporary Box3 object
 let currentLevelIndex = 0;
 
 // --- Public Functions ---
+
+/**
+ * Sets the starting level index (called from main.js when game starts)
+ * @param {number} levelIndex - The level to start from (0, 1, or 2)
+ */
+export function setStartingLevel(levelIndex) {
+    if (levelIndex >= 0 && levelIndex < CONSTANTS.MAZE.LEVELS.length) {
+        currentLevelIndex = levelIndex;
+        console.log("🎯 Starting level set to:", currentLevelIndex);
+    } else {
+        console.warn("⚠️ Invalid level index:", levelIndex, "- defaulting to 0");
+        currentLevelIndex = 0;
+    }
+}
 
 /**
  * Creates the maze structure based on the LEVEL_DATA and places all objects.
@@ -172,6 +186,10 @@ export function getWallColliders() {
     return wallColliders;
 }
 
+export function getCurrentLevelIndex() {
+    return currentLevelIndex;
+}
+
 // --- Private Helper Functions ---
 
 function createWall(x, z, size, height, width, material) {
@@ -249,6 +267,7 @@ function createMovingObstacle(x, z, size, height, width) {
     scene.add(obstacle);
     return obstacle;
 }
+
 function clearLevel() {
     // Remove every object created for this level
     for (const obj of levelObjects) {
@@ -260,7 +279,4 @@ function clearLevel() {
     objectsToAnimate = [];
     keyCrystal = null;
     exitPortal = null;
-}
-export function getCurrentLevelIndex() {
-    return currentLevelIndex;
 }

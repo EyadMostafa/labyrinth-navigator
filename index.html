@@ -81,7 +81,7 @@
         }
         
         /* Glassmorphism Button */
-        #restart-btn {
+        #restart-btn, #continue-btn {
             background: rgba(59, 130, 246, 0.3) !important;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -89,7 +89,7 @@
             transition: all 0.3s ease;
         }
         
-        #restart-btn:hover {
+        #restart-btn:hover, #continue-btn:hover {
             background: rgba(59, 130, 246, 0.5) !important;
             border-color: rgba(59, 130, 246, 0.7);
             box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
@@ -98,13 +98,13 @@
 
         /* Start Screen Styling */
         #start-screen {
-            position: fixed;  /* ← Change from relative to fixed */
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            z-index: 50;  /* ← Make sure it's on top */
+            z-index: 50;
             animation: fadeIn 1s ease-in;
         }
         
@@ -133,18 +133,79 @@
             text-shadow:
                 0 0 5px #fff,
                 0 0 10px #004cfe,
-                0 0 20px #ff0000, /* Middle glow */
-                0 0 40px #940303, /* Outer glow */
-                0 0 80px #390101; /* Deepest aura */
+                0 0 20px #ff0000,
+                0 0 40px #940303,
+                0 0 80px #390101;
+        }
+
+        /* FIXED: Ensure transition screen is above everything */
+        #level-transition-screen {
+            z-index: 100 !important;
+        }
+
+        /* Level Selection Menu Styles */
+        .level-menu {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .level-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .level-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(5px);
+        }
+
+        .level-card.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.7);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .level-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-card.locked:hover {
+            transform: none;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Level difficulty badges */
+        .difficulty-easy {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .difficulty-medium {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .difficulty-hard {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         }
     </style>
 </head>
 <body>
 
-    <!-- START SCREEN (New) -->
+    <!-- START SCREEN (Enhanced with Level Selection) -->
     <div id="start-screen" class="fixed inset-0 flex items-center justify-center z-50 bg-black">
         <!-- Video Background -->
-        <video id="start-video" autoplay loop playsinline class="absolute inset-0 w-full h-full object-cover">
+        <video id="start-video" autoplay loop playsinline muted class="absolute inset-0 w-full h-full object-cover">
             <source src="./assets/videos/scary story.mp4" type="video/mp4">
             Your browser does not support video backgrounds.
         </video>
@@ -163,12 +224,48 @@
             </svg>
         </button>
 
+        <!-- Level Selection Menu (Left Side) -->
+        <div class="absolute left-6 top-1/2 transform -translate-y-1/2 z-20 level-menu">
+            <h3 class="text-white text-xl font-bold mb-4 text-center">SELECT LEVEL</h3>
+            
+            <!-- Level 1 Card -->
+            <div class="level-card active mb-3" data-level="0" id="level-card-0">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-white font-bold">Level 1</span>
+                    <span class="difficulty-easy text-white text-xs px-2 py-1 rounded-full">Easy</span>
+                </div>
+                <p class="text-gray-300 text-sm mb-1">Shadow Passage</p>
+                <p class="text-gray-500 text-xs">The journey begins...</p>
+            </div>
+
+            <!-- Level 2 Card -->
+            <div class="level-card mb-3" data-level="1" id="level-card-1">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-white font-bold">Level 2</span>
+                    <span class="difficulty-medium text-white text-xs px-2 py-1 rounded-full">Medium</span>
+                </div>
+                <p class="text-gray-300 text-sm mb-1">The Haunted Halls</p>
+                <p class="text-gray-500 text-xs">Darkness deepens...</p>
+            </div>
+
+            <!-- Level 3 Card -->
+            <div class="level-card" data-level="2" id="level-card-2">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-white font-bold">Level 3</span>
+                    <span class="difficulty-hard text-white text-xs px-2 py-1 rounded-full">Hard</span>
+                </div>
+                <p class="text-gray-300 text-sm mb-1">Trapped Soul</p>
+                <p class="text-gray-500 text-xs">Final challenge awaits...</p>
+            </div>
+        </div>
+
+        <!-- Main Content (Center) -->
         <div class="relative z-10 text-center">
             <!-- Game Title -->
             <h1 class="text-6xl font-bold text-white mb-4 tracking-wider" style="text-shadow: 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(255,255,255,0.3);">
                 LABYRINTH NAVIGATOR
             </h1>
-            <h2 class="text-2xl text-gray-300 mb-12" style="text-shadow: 0 0 10px rgba(0,0,0,0.8);">Level 1: Shadow Passage</h2>
+            <h2 id="level-subtitle" class="text-2xl text-gray-300 mb-12" style="text-shadow: 0 0 10px rgba(0,0,0,0.8);">Level 1: Shadow Passage</h2>
             
             <!-- Game Instructions -->
             <div class="bg-black bg-opacity-70 backdrop-blur-lg border border-gray-600 rounded-lg p-8 mb-8 max-w-md mx-auto shadow-2xl">
@@ -178,7 +275,14 @@
                     <p>⌨️ <strong>WASD</strong> to move</p>
                     <p>💎 Find the <strong class="text-green-400">Green Crystal Key</strong></p>
                     <p>🚪 Reach the <strong class="text-orange-400">Exit Portal</strong></p>
-                    <p>⏱️ Beat the clock: <strong class="text-red-400">60 seconds</strong></p>
+                    <p>⏱️ Beat the clock: <strong class="text-red-400" id="time-limit-display">60 seconds</strong></p>
+                </div>
+                
+                <!-- Level-specific flavor text -->
+                <div class="mt-4 pt-4 border-t border-gray-600">
+                    <p id="level-flavor-text" class="text-sm text-gray-400 italic">
+                        "The first test of many. Can you find your way through the shadows?"
+                    </p>
                 </div>
             </div>
             
@@ -189,7 +293,53 @@
         </div>
     </div>
 
-    <!-- UI Overlay for Game Status (Currently not functional, only visual placeholders) -->
+    <!-- Level Transition Screen (FIXED z-index) -->
+    <div id="level-transition-screen" class="hidden fixed inset-0" style="z-index: 100;">
+        <!-- Background Image (will be set dynamically) -->
+        <div id="transition-background" class="absolute inset-0 bg-cover bg-center" style="background-image: url('./assets/images/dungeon gate.jpg');"></div>
+        
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+        
+        <!-- Content -->
+        <div class="relative z-10 flex items-center justify-center h-full">
+            <div class="text-center">
+                <!-- Level Complete Badge -->
+                <div class="mb-8">
+                    <h1 class="text-6xl font-bold text-green-400 mb-2" style="text-shadow: 0 0 20px rgba(0,255,0,0.5), 0 0 40px rgba(0,255,0,0.3);">
+                        LEVEL COMPLETE
+                    </h1>
+                    <p id="completed-level-text" class="text-2xl text-gray-300">Level 1 Conquered!</p>
+                </div>
+                
+                <!-- Stats Container -->
+                <div class="bg-black bg-opacity-70 backdrop-blur-lg border border-gray-600 rounded-lg p-8 mb-8 max-w-md mx-auto">
+                    <h3 class="text-xl text-white font-semibold mb-4">Your Performance</h3>
+                    <div class="text-left text-gray-300 space-y-2">
+                        <p>⏱️ Time Remaining: <strong id="time-remaining" class="text-green-400">45.3s</strong></p>
+                        <p>🔑 Key Retrieved: <strong class="text-green-400">✓</strong></p>
+                        <p>🚪 Exit Reached: <strong class="text-green-400">✓</strong></p>
+                    </div>
+                </div>
+                
+                <!-- Next Level Info -->
+                <div class="mb-8">
+                    <p class="text-xl text-gray-400 mb-2">Prepare yourself...</p>
+                    <p id="next-level-text" class="text-3xl font-bold text-orange-400" style="text-shadow: 0 0 15px rgba(255,165,0,0.5);">Level 2: The Haunted Halls</p>
+                </div>
+                
+                <!-- Continue Button -->
+                <button id="continue-btn" class="bg-green-600 hover:bg-green-700 text-white text-2xl font-bold px-12 py-4 rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-green-500/50 border-2 border-green-500">
+                    CONTINUE...
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- The game canvas container -->
+    <div id="gameCanvas"></div>
+
+    <!-- UI Overlay for Game Status -->
     <div id="ui-overlay" class="hidden absolute top-0 left-0 p-4 w-full flex justify-between text-white text-lg font-bold z-10 pointer-events-none">
         <div id="time-display" class="ui-panel">TIME: 60.0</div>
         <div id="status-display" class="ui-panel">KEY STATUS: Missing</div>
@@ -211,13 +361,98 @@
         </div>
     </div>
 
-    <!-- The game canvas container -->
-    <div id="gameCanvas"></div>
-
     <!-- Load the Three.js library from a CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <!-- Link to the core game logic file -->
     <script src="./src/main.js" type="module"></script>
+
+    <!-- Level Selection JavaScript -->
+    <script>
+        // Level data configuration
+        const levelData = {
+            0: {
+                name: "Shadow Passage",
+                subtitle: "Level 1: Shadow Passage",
+                difficulty: "Easy",
+                timeLimit: 60,
+                video: "./assets/videos/scary story.mp4",
+                flavorText: '"The first test of many. Can you find your way through the shadows?"',
+                startButtonColor: "bg-green-600 hover:bg-green-700"
+            },
+            1: {
+                name: "The Haunted Halls",
+                subtitle: "Level 2: The Haunted Halls",
+                difficulty: "Medium",
+                timeLimit: 60,
+                video: "./assets/videos/scary hands.mp4",
+                flavorText: '"Echoes of the past haunt these corridors. Stay alert, for you are not alone..."',
+                startButtonColor: "bg-orange-600 hover:bg-orange-700"
+            },
+            2: {
+                name: "Trapped Soul",
+                subtitle: "Level 3: Trapped Soul",
+                difficulty: "Hard",
+                timeLimit: 60,
+                video: "./assets/videos/dark soul.mp4",
+                flavorText: '"The final challenge awaits. Only the brave escape the labyrinth\'s deepest depths."',
+                startButtonColor: "bg-red-600 hover:bg-red-700"
+            }
+        };
+
+        let selectedLevel = 0; // Default to Level 1
+
+        // Function to update start screen based on selected level
+        function updateStartScreen(levelIndex) {
+            const level = levelData[levelIndex];
+            
+            // Update subtitle
+            document.getElementById('level-subtitle').textContent = level.subtitle;
+            
+            // Update time limit display
+            document.getElementById('time-limit-display').textContent = `${level.timeLimit} seconds`;
+            
+            // Update flavor text
+            document.getElementById('level-flavor-text').textContent = level.flavorText;
+            
+            // Update video background
+            const video = document.getElementById('start-video');
+            if (video.src !== level.video) {
+                video.src = level.video;
+                video.load();
+                video.play().catch(err => console.log('Video play failed:', err));
+            }
+            
+            // Update start button color
+            const startBtn = document.getElementById('start-game-btn');
+            startBtn.className = `${level.startButtonColor} text-white text-2xl font-bold px-12 py-4 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-green-500/50`;
+            
+            // Update selected level in main.js
+            selectedLevel = levelIndex;
+        }
+
+        // Level card click handlers
+        document.querySelectorAll('.level-card').forEach(card => {
+            card.addEventListener('click', function() {
+                if (this.classList.contains('locked')) return;
+                
+                const levelIndex = parseInt(this.dataset.level);
+                
+                // Remove active class from all cards
+                document.querySelectorAll('.level-card').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked card
+                this.classList.add('active');
+                
+                // Update start screen
+                updateStartScreen(levelIndex);
+            });
+        });
+
+        // Make selectedLevel accessible to main.js
+        window.getSelectedLevel = function() {
+            return selectedLevel;
+        };
+    </script>
 </body>
 </html>

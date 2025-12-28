@@ -41,6 +41,27 @@ export const MAZE = {
             'W         E         W',
             'WWWWWWWWWWWWWWWWWWWWW'
         ],
+
+        // --- LEVEL 3 (Index 2) ---
+        [
+            'WWWWWWWWWWWWWWWWWWWWW',
+            'W S W       W K     W',
+            'W   W WWW W W W WWW W',
+            'W     W   W   W W   W',
+            'WWWWWWW W WWWWWWW W W',
+            'W       W    M    W W',
+            'W WWWWWWWWWWWWWWWWW W',
+            'W                   W',
+            'WWWWWWWWWWWWWWWWWWW W',
+            'W         E         W',
+            'WWWWWWWWWWWWWWWWWWWWW'
+        ],
+    ],
+
+    LEVEL_NAMES: [
+        "Shadow Passage",
+        "The Haunted Halls",
+        "Trapped Soul",
     ]
 };
 
