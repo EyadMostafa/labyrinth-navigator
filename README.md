@@ -87,7 +87,7 @@ A - Move Left
 S - Move Backward
 D - Move Right
 Mouse - Look Around (Pointer Lock)
-L - Look Behind (Level 3 only)
+E - Look Behind (Level 3 only)
 ```
 
 ### Speed Modifiers (Level 3)
@@ -95,7 +95,7 @@ L - Look Behind (Level 3 only)
 |-------|-------|-------------|
 | Normal | 100% (5 units/sec) | Default movement speed |
 | Holding Crystal | 60% (3 units/sec) | Slowed by the weight of the crystal |
-| Looking Back (L key) | 30% (1.5 units/sec) | Very slow while facing the entity |
+| Looking Back (E key) | 30% (1.5 units/sec) | Very slow while facing the entity |
 
 ### Entity AI Behavior (Level 3)
 The entity follows these rules:
@@ -137,7 +137,7 @@ The entity follows these rules:
 - **False echo audio**: Creepy sounds when standing still
 - **Crystal weight**: Movement speed reduced to 60%
 - **The Entity**: AI-controlled enemy that hunts you
-- **Look-back mechanic**: Press L to survive
+- **Look-back mechanic**: Press E to survive
 
 ---
 
