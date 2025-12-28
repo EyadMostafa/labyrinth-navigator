@@ -151,12 +151,14 @@ The entity follows these rules:
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/labyrinth-navigator.git
+git clone https://github.com/EyadMostafa/labyrinth-navigator.git
 cd labyrinth-navigator
 ```
-
-2. **Start a local server**
-
+2. **Install dependencies**
+```bash
+npm install
+```
+3. **Start a local server**
 **Option A: Python**
 ```bash
 python -m http.server 8000
@@ -171,14 +173,10 @@ npx http-server -p 8000
 - Install "Live Server" extension
 - Right-click `index.html` → "Open with Live Server"
 
-3. **Open in browser**
+4. **Open in browser**
 ```
 http://localhost:8000
 ```
-
-### 📦 No Build Process Required!
-This project uses vanilla JavaScript ES6 modules - no webpack, no npm dependencies!
-
 ---
 
 ## 🎯 How to Play
