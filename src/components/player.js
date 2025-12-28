@@ -9,6 +9,7 @@ let camera;
 let keys = { w: false, a: false, s: false, d: false, e: false, l: false }; // Input state tracker
 let isPointerLocked = false;
 let playerCollider; // Bounding box representation of the player
+let lookBackYawOffset = 0; // Camera-only yaw offset for looking behind
 const PLAYER_RADIUS = 0.5; // Player's effective width for collision
 
 // Level 3 specific variables
@@ -58,18 +59,17 @@ export function updatePlayer(deltaTime, gameData, wallColliders) {
 
     // Update looking back state and handle camera rotation
     const wasLookingBack = isLookingBack;
-    isLookingBack = keys.l;
+    isLookingBack = keys.e;
+
+    camera.rotation.y = lookBackYawOffset;
     
-    // Handle L key press - rotate 180° to look behind
+    // Handle look-back (camera only, do NOT rotate player)
     if (isLookingBack && !wasLookingBack) {
-        // Player just pressed L - turn around
-        originalYRotation = player.rotation.y; // Store current rotation
-        player.rotation.y += Math.PI; // Rotate 180 degrees
-        console.log("👁️ Player turned around to look behind! (L pressed)");
+        lookBackYawOffset = Math.PI;
+        console.log("👁️ Camera looking behind");
     } else if (!isLookingBack && wasLookingBack) {
-        // Player released L - turn back to original direction
-        player.rotation.y = originalYRotation; // Restore original rotation
-        console.log("👁️ Player turned back forward (L released)");
+        lookBackYawOffset = 0;
+        console.log("👁️ Camera looking forward");
     }
 
     // Determine current movement speed based on player state
@@ -176,9 +176,9 @@ function onKeyDown(event) {
     if (key in keys) {
         keys[key] = true;
         
-        // DEBUG: Log L key press
-        if (key === 'l') {
-            console.log("🔑 L key pressed! Looking back...");
+        // DEBUG: Log E key press
+        if (key === 'e') {
+            console.log("🔑 E key pressed! Looking back...");
         }
     }
 }
@@ -189,8 +189,8 @@ function onKeyUp(event) {
         keys[key] = false;
         
         // DEBUG: Log L key release
-        if (key === 'l') {
-            console.log("🔑 L key released! Looking forward...");
+        if (key === 'e') {
+            console.log("🔑 E key released! Looking forward...");
         }
     }
 }
@@ -226,6 +226,7 @@ function onMouseMove(event) {
     const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
     
     player.rotation.y -= movementX * CONSTANTS.PLAYER.ROTATION_SPEED;
+
     let newPitch = camera.rotation.x - movementY * CONSTANTS.PLAYER.ROTATION_SPEED;
     newPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, newPitch));
     camera.rotation.x = newPitch;
