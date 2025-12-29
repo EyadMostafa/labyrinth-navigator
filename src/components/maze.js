@@ -159,8 +159,7 @@ export function nextLevel() {
     currentLevelIndex++;
     
     // 2. Re-run createMaze to build the new level
-    // (createMaze will handle clearing the old walls automatically 
-    // IF you updated it to use the new "clearLevel" logic I sent before)
+    // (createMaze will handle clearing the old walls automatically
     return createMaze(scene);
 }
 /**
